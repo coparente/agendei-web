@@ -1,0 +1,8 @@
+para criar um novo projeto web
+
+npm create vite
+
+para instalar e atualizar o node_modules
+
+npm install
+
