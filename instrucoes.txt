@@ -6,3 +6,6 @@ para instalar e atualizar o node_modules
 
 npm install
 
+para criar as rotas 
+npm install react-router-dom
+
