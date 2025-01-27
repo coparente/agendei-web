@@ -2,12 +2,17 @@
 import "./appointments.css";
 import Navbar from "../../components/navbar/navbar.jsx";
 import { Link, useNavigate } from "react-router-dom";
-import { doctors, appointments } from "../../constants/data.js";
+import { doctors } from "../../constants/data.js";
 import Appointment from "../../components/appointment/appointment.jsx";
+import { useEffect, useState } from "react";
+import api from "../../constants/api.js";
+
 
 function Appointments() {
 
 const navigate = useNavigate();
+const [appointments, setAppointments] = useState([]);
+
 
 function ClickEdit(id_appointment){
   navigate("/appointments/edit/" + id_appointment);
@@ -16,6 +21,30 @@ function ClickEdit(id_appointment){
 function ClickDelete(id_appointment){
   console.log("Deletar " + id_appointment);
 }
+
+async function LoadAppointments(){
+
+  try {
+    const response = await api.get("/appointments");
+
+
+    if (response.data)
+      setAppointments(response.data.appointments)
+   
+
+  } catch (error) {
+    if (error.response?.data.error)
+        alert(error.response?.data.error);
+      else
+      alert("Erro ao carregar conteudo. Tente novamente mais tarde");
+      console.log(error);
+
+  }
+}
+
+useEffect(() => {
+LoadAppointments();
+}, []);
 
   return (
     <div className="container-fluid mt-page">
@@ -64,7 +93,7 @@ function ClickDelete(id_appointment){
           </thead>
           <tbody>
           {
-            appointments.map((ap) => {
+            appointments?.map((ap) => {
               return <Appointment key={ap.id_appointment}
               id_appointment={ap.id_appointment}
                user={ap.user}
