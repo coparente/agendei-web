@@ -23,7 +23,7 @@ function Register() {
       return setMsg("As senhas não conferem. Digite novamente.");
 
     try {
-      const response = await api.post("/users/register", {
+      const response = await api.post("/admin/register", {
         name,
         email,
         password
@@ -33,7 +33,7 @@ function Register() {
 
       if (response.data) {
         localStorage.setItem("sessionToken", response.data.token)
-        localStorage.setItem("sessionId", response.data.id_user)
+        localStorage.setItem("sessionId", response.data.id_admin)
         localStorage.setItem("sessionEmail", email)
         localStorage.setItem("sessionName", name)
         api.defaults.headers.common["Authorization"] = "Bearer " + response.data.token;

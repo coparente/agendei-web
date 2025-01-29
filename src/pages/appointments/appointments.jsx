@@ -2,7 +2,7 @@
 import "./appointments.css";
 import Navbar from "../../components/navbar/navbar.jsx";
 import { Link, useNavigate } from "react-router-dom";
-import { doctors } from "../../constants/data.js";
+// import { doctors } from "../../constants/data.js";
 import Appointment from "../../components/appointment/appointment.jsx";
 import { useEffect, useState } from "react";
 import api from "../../constants/api.js";
@@ -10,41 +10,73 @@ import api from "../../constants/api.js";
 
 function Appointments() {
 
-const navigate = useNavigate();
-const [appointments, setAppointments] = useState([]);
+  const navigate = useNavigate();
+  const [appointments, setAppointments] = useState([]);
+  const [doctors, setDoctors] = useState([]);
+  const [idDoctor, setIdDoctor] = useState(0);
 
 
-function ClickEdit(id_appointment){
-  navigate("/appointments/edit/" + id_appointment);
-}
+  function ClickEdit(id_appointment) {
+    navigate("/appointments/edit/" + id_appointment);
+  }
 
-function ClickDelete(id_appointment){
-  console.log("Deletar " + id_appointment);
-}
+  function ClickDelete(id_appointment) {
+    console.log("Deletar " + id_appointment);
+  }
 
-async function LoadAppointments(){
-
-  try {
-    const response = await api.get("/appointments");
+  async function LoadDoctors() {
 
 
-    if (response.data)
-      setAppointments(response.data.appointments)
-   
+    try {
+      const response = await api.get("/doctors");
 
-  } catch (error) {
-    if (error.response?.data.error)
-        alert(error.response?.data.error);
+      if (response.data)
+        setDoctors(response.data.doctors)
+
+
+    } catch (error) {
+      if (error.response?.data.error)
+        alert(error.response?.data.message);
       else
-      alert("Erro ao carregar conteudo. Tente novamente mais tarde");
+        alert("Erro ao carregar conteudo. Tente novamente mais tarde");
       console.log(error);
 
+    }
   }
-}
+  async function LoadAppointments() {
 
-useEffect(() => {
-LoadAppointments();
-}, []);
+    try {
+      const response = await api.get("/admin/appointments", {
+        params: {
+          id_doctor: idDoctor
+        }
+      });
+
+      console.log(response.data);
+      if (response.data)
+        setAppointments(response.data.appointments)
+
+
+    } catch (error) {
+      if (error.response?.data.error)
+        alert(error.response?.data.message);
+      else
+        alert("Erro ao carregar conteudo. Tente novamente mais tarde");
+      console.log(error);
+
+    }
+  }
+
+  function ChangeDoctor(e){
+    setIdDoctor(e.target.value)
+
+  }
+
+
+  useEffect(() => {
+    LoadDoctors();
+    LoadAppointments();
+  }, []);
 
   return (
     <div className="container-fluid mt-page">
@@ -67,18 +99,18 @@ LoadAppointments();
           <input type="date" className="form-control" id="endDate" />
 
           <div className="form-control ms-3 me-3">
-            <select name="doctor" id="doctor">
-              <option value="">Todos os Médicos</option>
+            <select name="doctor" id="doctor" value={idDoctor} onChange={ChangeDoctor}>
+              <option value="0">Todos os Médicos</option>
 
-              {doctors.map((doc) => {
+              {doctors?.map((doc) => {
                 return <option key={doc.id_doctor} value={doc.id_doctor}>{doc.name}</option>;
               })}
             </select>
           </div>
-          <button className="btn btn-primary">Filtrar</button>
+          <button onClick={LoadAppointments} className="btn btn-primary" type="button">Filtrar</button>
         </div>
       </div>
-<hr />
+      <hr />
       <div>
         <table className="table table-hover">
           <thead>
@@ -92,20 +124,20 @@ LoadAppointments();
             </tr>
           </thead>
           <tbody>
-          {
-            appointments?.map((ap) => {
-              return <Appointment key={ap.id_appointment}
-              id_appointment={ap.id_appointment}
-               user={ap.user}
-               doctor={ap.doctor}
-               service={ap.service}
-               booking_date={ap.booking_date}
-               booking_hour={ap.booking_hour}
-               price={ap.price}
-               clickEdit={ClickEdit}
-               clickDelete={ClickDelete} />
-            })
-          }
+            {
+              appointments?.map((ap) => {
+                return <Appointment key={ap.id_appointment}
+                  id_appointment={ap.id_appointment}
+                  user={ap.user}
+                  doctor={ap.doctor}
+                  service={ap.service}
+                  booking_date={ap.booking_date}
+                  booking_hour={ap.booking_hour}
+                  price={ap.price}
+                  clickEdit={ClickEdit}
+                  clickDelete={ClickDelete} />
+              })
+            }
           </tbody>
         </table>
       </div>

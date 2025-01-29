@@ -19,14 +19,14 @@ function Login() {
     setMsg("");
 
     try {
-      const response = await api.post("/users/login", {
+      const response = await api.post("/admin/login", {
         email,
         password
       })
 
       if (response.data) {
         localStorage.setItem("sessionToken", response.data.user.token)
-        localStorage.setItem("sessionId", response.data.user.id_user)
+        localStorage.setItem("sessionId", response.data.user.id_admin)
         localStorage.setItem("sessionEmail", response.data.user.email)
         localStorage.setItem("sessionName", response.data.user.name)
         api.defaults.headers.common['Authorization'] = "Bearer " + response.data.user.token;
