@@ -3,6 +3,7 @@
 function Appointment(props) {
 
   const dt = new Date(props.booking_date);
+  // const dt = new Date(props.booking_date + "T" + props.booking_hour);
 
   return (
     <tr>

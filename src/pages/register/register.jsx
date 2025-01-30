@@ -3,7 +3,10 @@ import logo from "../../assets/logo.png";
 import img from "../../assets/imglogin.png";
 import { Link, useNavigate } from "react-router-dom";
 import { useState } from "react";
+import { toast } from "react-toastify";
+import "react-toastify/dist/ReactToastify.css";
 import api from "../../constants/api.js";
+
 
 function Register() {
 
@@ -13,14 +16,26 @@ function Register() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [password2, setPassword2] = useState("");
-  const [msg, setMsg] = useState("");
+  
+  
+  // Configuração padrão do Toast
+  const toastConfig = {
+    position: "top-right",
+    autoClose: 5000,
+    hideProgressBar: false,
+    closeOnClick: true,
+    pauseOnHover: true,
+    draggable: true,
+    progress: undefined,
+    theme: "colored",
+  };
 
   async function ExecuteAccount() {
 
-    setMsg("");
+    // setMsg("");
 
     if (password != password2)
-      return setMsg("As senhas não conferem. Digite novamente.");
+      return toast.error("As senhas não conferem. Digite novamente.", toastConfig);
 
     try {
       const response = await api.post("/admin/register", {
@@ -40,14 +55,20 @@ function Register() {
         navigate("/appointments");
 
       } else {
-        setMsg("Erro ao ao criar conta. Tente novamente mais tarde");
+        toast.error("Erro ao efetuar login. Tente novamente mais tarde", toastConfig);
       }
     } catch (error) {
-      if (error.response?.data.message)
-        setMsg(error.response?.data.message);
-      else
-        setMsg("Erro ao ao criar conta. Tente novamente mais tarde");
-      console.log(error);
+      
+      let errorMessage = "Erro ao efetuar login. Tente novamente mais tarde";
+
+    if (error.response) {
+      errorMessage = error.response.data?.message || error.response.data?.error;
+    } else if (error.request) {
+      errorMessage = "Sem resposta do servidor";
+    }
+
+    toast.error(errorMessage, toastConfig);
+    console.error("Login Error:", error);
     }
 
 
@@ -57,6 +78,7 @@ function Register() {
 
   return (
     <div className="row">
+
       <div className="col-sm-5 d-flex justify-content-center align-items-center text-center">
         <form className="form-signin">
           <img src={logo} className="logo mb-4" />
@@ -81,12 +103,12 @@ function Register() {
             <button onClick={ExecuteAccount} className="btn btn-primary w-100" type="button">Criar minha conta</button>
           </div>
 
-          {
+          {/* {
             msg.length > 0 &&
             <div className="alert alert-danger" role="alert">
               {msg}
             </div>
-          }
+          } */}
 
           <div>
             <span className="me-1">Já tenho uma conta.</span>

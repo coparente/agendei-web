@@ -3,7 +3,11 @@ import logo from "../../assets/logo.png";
 import img from "../../assets/imglogin.png";
 import { Link, useNavigate } from "react-router-dom";
 import { useState } from "react";
+import { toast } from "react-toastify";
+import "react-toastify/dist/ReactToastify.css";
 import api from "../../constants/api.js";
+
+
 
 function Login() {
 
@@ -11,14 +15,26 @@ function Login() {
 
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [msg, setMsg] = useState("");
+  const [loading, setLoading] = useState(false);
 
-
+  // Configuração padrão do Toast
+  const toastConfig = {
+    position: "top-right",
+    autoClose: 5000,
+    hideProgressBar: false,
+    closeOnClick: true,
+    pauseOnHover: true,
+    draggable: true,
+    progress: undefined,
+    theme: "colored",
+  };
   async function ExecuteLogin() {
+    setLoading(true);
 
-    setMsg("");
+
 
     try {
+
       const response = await api.post("/admin/login", {
         email,
         password
@@ -30,17 +46,28 @@ function Login() {
         localStorage.setItem("sessionEmail", response.data.user.email)
         localStorage.setItem("sessionName", response.data.user.name)
         api.defaults.headers.common['Authorization'] = "Bearer " + response.data.user.token;
-        navigate("/appointments");
+
+        // navigate("/appointments");
+        window.location.href = "/appointments";
 
       } else {
-        setMsg("Erro ao efetuar login. Tente novamente mais tarde");
+        toast.error("Erro ao efetuar login. Tente novamente mais tarde", toastConfig);
       }
     } catch (error) {
-      if (error.response?.data.error)
-        setMsg(error.response?.data.message);
-      else
-        setMsg("Erro ao efetuar login. Tente novamente mais tarde");
-      console.log(error);
+      let errorMessage = "Erro ao efetuar login. Tente novamente mais tarde";
+
+      if (error.response) {
+        // Extrai mensagem do servidor
+        errorMessage = error.response.data?.message || error.response.data?.error;
+      } else if (error.request) {
+        errorMessage = "Sem resposta do servidor";
+      }
+
+      toast.error(errorMessage, toastConfig);
+      console.error("Login Error:", error);
+
+    } finally {
+      setLoading(false);
     }
 
 
@@ -56,23 +83,34 @@ function Login() {
           <h5 className="mb-4 text-secondary">Acesse sua conta</h5>
 
           <div className="mt-4 ">
-            <input type="email" placeholder="E-mail" className="form-control" onChange={(e) => setEmail(e.target.value)} />
+            <input type="email" placeholder="E-mail" value={email} className="form-control" onChange={(e) => setEmail(e.target.value)} />
           </div>
 
           <div className="mt-2">
-            <input type="password" placeholder="Senha" className="form-control" onChange={(e) => setPassword(e.target.value)} />
+            <input type="password" placeholder="Senha" value={password} className="form-control" onChange={(e) => setPassword(e.target.value)} />
           </div>
 
           <div className="mt-3 mb-5">
-            <button onClick={ExecuteLogin} className="btn btn-primary w-100" type="button">Login</button>
+            {/* <button onClick={ExecuteLogin} className="btn btn-primary w-100" type="button">Login</button> */}
+            <button
+              type="submit"
+              className="btn btn-primary w-100"
+              disabled={loading}
+              onClick={ExecuteLogin}
+            >
+              {loading ? (
+                <div className="spinner-border spinner-border-sm" role="status">
+                  <span className="visually-hidden">Carregando...</span>
+                </div>
+              ) : "Login"}
+            </button>
           </div>
-
-          {
+          {/* {
             msg.length > 0 &&
             <div className="alert alert-danger" role="alert">
               {msg}
             </div>
-          }
+          } */}
 
 
           <div>

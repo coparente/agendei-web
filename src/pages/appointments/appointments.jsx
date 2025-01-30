@@ -2,9 +2,10 @@
 import "./appointments.css";
 import Navbar from "../../components/navbar/navbar.jsx";
 import { Link, useNavigate } from "react-router-dom";
-// import { doctors } from "../../constants/data.js";
 import Appointment from "../../components/appointment/appointment.jsx";
 import { useEffect, useState } from "react";
+import { toast } from "react-toastify";
+import "react-toastify/dist/ReactToastify.css";
 import api from "../../constants/api.js";
 
 
@@ -13,15 +14,38 @@ function Appointments() {
   const navigate = useNavigate();
   const [appointments, setAppointments] = useState([]);
   const [doctors, setDoctors] = useState([]);
-  const [idDoctor, setIdDoctor] = useState(0);
 
+  const [idDoctor, setIdDoctor] = useState("");
+  const [dtStart, setDtStart] = useState("");
+  const [dtEnd, setDtEnd] = useState("");
+
+  // Configuração padrão do Toast
+  const toastConfig = {
+    position: "top-right",
+    autoClose: 5000,
+    hideProgressBar: false,
+    closeOnClick: true,
+    pauseOnHover: true,
+    draggable: true,
+    progress: undefined,
+    theme: "colored",
+  };
+
+  // Verifica o token ao carregar o componente
+  useEffect(() => {
+    const token = localStorage.getItem("sessionToken");
+
+    if (!token) {
+      navigate("/"); // Redireciona para login se não houver token
+    }
+  }, [navigate]);
 
   function ClickEdit(id_appointment) {
     navigate("/appointments/edit/" + id_appointment);
   }
 
   function ClickDelete(id_appointment) {
-    console.log("Deletar " + id_appointment);
+    toast.error("Deletar " + id_appointment);
   }
 
   async function LoadDoctors() {
@@ -35,11 +59,17 @@ function Appointments() {
 
 
     } catch (error) {
-      if (error.response?.data.error)
-        alert(error.response?.data.message);
-      else
-        alert("Erro ao carregar conteudo. Tente novamente mais tarde");
-      console.log(error);
+
+      let errorMessage = "Erro ao efetuar login. Tente novamente mais tarde";
+
+      if (error.response) {
+        errorMessage = error.response.data?.message || error.response.data?.error;
+      } else if (error.request) {
+        errorMessage = "Sem resposta do servidor";
+      }
+
+      toast.error(errorMessage, toastConfig);
+      console.error("Login Error:", error);
 
     }
   }
@@ -48,35 +78,62 @@ function Appointments() {
     try {
       const response = await api.get("/admin/appointments", {
         params: {
-          id_doctor: idDoctor
+          id_doctor: idDoctor,
+          dt_start: dtStart,
+          dt_end: dtEnd
         }
       });
 
-      console.log(response.data);
       if (response.data)
         setAppointments(response.data.appointments)
 
 
     } catch (error) {
-      if (error.response?.data.error)
-        alert(error.response?.data.message);
-      else
-        alert("Erro ao carregar conteudo. Tente novamente mais tarde");
-      console.log(error);
 
+      let errorMessage = "Erro ao carregar conteudo. Tente novamente mais tarde";
+
+      if (error.response) {
+        errorMessage = error.response.data?.message || error.response.data?.error;
+
+
+      } else if (error.request) {
+        errorMessage = "Sem resposta do servidor";
+      }
+
+      toast.error(errorMessage, toastConfig);
+
+      console.error("Login Error:", error);
     }
   }
 
-  function ChangeDoctor(e){
+
+  function ChangeDoctor(e) {
     setIdDoctor(e.target.value)
 
   }
 
 
+  // useEffect(() => {
+  //   LoadDoctors();
+  //   LoadAppointments();
+  // }, []);
   useEffect(() => {
+    const checkAuth = () => {
+      const token = localStorage.getItem("sessionToken");
+      
+      if (!token) {
+        toast.error("Acesso não autorizado!", toastConfig);
+        navigate("/");
+        return;
+      }
+      
+      // Garante que o token está atualizado no header
+      api.defaults.headers.common['Authorization'] = `Bearer ${token}`;
+    };
+    checkAuth();
     LoadDoctors();
     LoadAppointments();
-  }, []);
+  }, [navigate]);
 
   return (
     <div className="container-fluid mt-page">
@@ -94,13 +151,13 @@ function Appointments() {
         </div>
 
         <div className="d-flex justify-content-end">
-          <input type="date" className="form-control" id="startDate" />
+          <input type="date" className="form-control" id="startDate" onChange={(e) => setDtStart(e.target.value)} />
           <span className="m-2">Até</span>
-          <input type="date" className="form-control" id="endDate" />
+          <input type="date" className="form-control" id="endDate" onChange={(e) => setDtEnd(e.target.value)} />
 
           <div className="form-control ms-3 me-3">
             <select name="doctor" id="doctor" value={idDoctor} onChange={ChangeDoctor}>
-              <option value="0">Todos os Médicos</option>
+              <option value="">Todos os Médicos</option>
 
               {doctors?.map((doc) => {
                 return <option key={doc.id_doctor} value={doc.id_doctor}>{doc.name}</option>;
