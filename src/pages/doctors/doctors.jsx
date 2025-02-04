@@ -17,6 +17,8 @@ function Doctors() {
     const [doctors, setDoctors] = useState([]);
     const [name, setName] = useState("")
 
+    const [idToDelete, setIdToDelete] = useState(null);
+
     // Configuração padrão do Toast
     const toastConfig = {
         position: "top-right",
@@ -34,8 +36,29 @@ function Doctors() {
     }
 
     function ClickDelete(id_doctor) {
-        toast.error("Deletar " + id_doctor);
+        // toast.error("Deletar " + id_doctor);
+        showDeleteModal(id_doctor);
     }
+
+    function showDeleteModal(id_doctor) {
+        setIdToDelete(id_doctor);
+        const modal = new bootstrap.Modal(document.getElementById("confirmDeleteModal"));
+        modal.show();
+      }
+      
+      async function confirmDelete() {
+        if (!idToDelete) return;
+      
+        try {
+          await api.delete(`/doctors/${idToDelete}`);
+          toast.success("Médico deletado com sucesso!");
+          LoadDoctors(); // Atualiza a lista após deletar
+        } catch (error) {
+          toast.error("Erro ao deletar o médico.");
+        }
+      
+        setIdToDelete(null);
+      }
 
     async function LoadDoctors() {
 
@@ -46,7 +69,7 @@ function Doctors() {
                 }
             });
 
-            console.log(response.data);
+            // console.log(response.data);
 
             if (response.data)
                 setDoctors(response.data.doctors)
@@ -119,7 +142,32 @@ function Doctors() {
                         }
                     </tbody>
                 </table>
+                {
+                    doctors.length == 0 && <div className="text-center">
+                        <p>Nenhum médico encontrado...</p>
+                    </div>
+                }
             </div>
+
+            {/* Modal de Confirmação */}
+            <div className="modal fade" id="confirmDeleteModal" tabIndex="-1" aria-hidden="true">
+                <div className="modal-dialog">
+                    <div className="modal-content">
+                        <div className="modal-header">
+                            <h5 className="modal-title">Confirmar Exclusão</h5>
+                            <button type="button" className="btn-close" data-bs-dismiss="modal" aria-label="Fechar"></button>
+                        </div>
+                        <div className="modal-body">
+                            Tem certeza que deseja excluir este Médico?
+                        </div>
+                        <div className="modal-footer">
+                            <button type="button" className="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                            <button type="button" className="btn btn-danger" onClick={confirmDelete} data-bs-dismiss="modal">Deletar</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
         </div>
     )
 }

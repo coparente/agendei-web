@@ -7,6 +7,7 @@ import { useEffect, useState } from "react";
 import { toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import api from "../../constants/api.js";
+import logo from "../../assets/logo.png";
 
 
 function Appointments() {
@@ -18,6 +19,8 @@ function Appointments() {
   const [idDoctor, setIdDoctor] = useState("");
   const [dtStart, setDtStart] = useState("");
   const [dtEnd, setDtEnd] = useState("");
+
+  const [idToDelete, setIdToDelete] = useState(null);
 
   // Configuração padrão do Toast
   const toastConfig = {
@@ -45,7 +48,28 @@ function Appointments() {
   }
 
   function ClickDelete(id_appointment) {
-    toast.error("Deletar " + id_appointment);
+    showDeleteModal(id_appointment);
+    // toast.error("Deletar " + id_appointment);
+  }
+
+  function showDeleteModal(id_appointment) {
+    setIdToDelete(id_appointment);
+    const modal = new bootstrap.Modal(document.getElementById("confirmDeleteModal"));
+    modal.show();
+  }
+  
+  async function confirmDelete() {
+    if (!idToDelete) return;
+  
+    try {
+      await api.delete(`/appointments/${idToDelete}`);
+      toast.success("Agendamento deletado com sucesso!");
+      LoadAppointments(); // Atualiza a lista após deletar
+    } catch (error) {
+      toast.error("Erro ao deletar o agendamento.");
+    }
+  
+    setIdToDelete(null);
   }
 
   async function LoadDoctors() {
@@ -120,13 +144,13 @@ function Appointments() {
   useEffect(() => {
     const checkAuth = () => {
       const token = localStorage.getItem("sessionToken");
-      
+
       if (!token) {
         toast.error("Acesso não autorizado!", toastConfig);
         navigate("/");
         return;
       }
-      
+
       // Garante que o token está atualizado no header
       api.defaults.headers.common['Authorization'] = `Bearer ${token}`;
     };
@@ -197,7 +221,32 @@ function Appointments() {
             }
           </tbody>
         </table>
+
+        {
+          appointments.length == 0 && <div className="text-center">
+            <p>Nenhum agendamento encontrado...</p>
+          </div>
+        }
       </div>
+      {/* Modal de Confirmação */}
+      <div className="modal fade" id="confirmDeleteModal" tabIndex="-1" aria-hidden="true">
+        <div className="modal-dialog">
+          <div className="modal-content">
+            <div className="modal-header">
+              <h5 className="modal-title">Confirmar Exclusão</h5>
+              <button type="button" className="btn-close" data-bs-dismiss="modal" aria-label="Fechar"></button>
+            </div>
+            <div className="modal-body">
+              Tem certeza que deseja excluir este agendamento?
+            </div>
+            <div className="modal-footer">
+              <button type="button" className="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+              <button type="button" className="btn btn-danger" onClick={confirmDelete} data-bs-dismiss="modal">Deletar</button>
+            </div>
+          </div>
+        </div>
+      </div>
+
     </div>
   );
 }
