@@ -2,8 +2,8 @@ import axios from "axios";
 
 
 const api = axios.create({
-    // baseURL: "https://api-node-xa3e.onrender.com"
-    baseURL: "http://localhost:3001"
+    // baseURL: "https://api-node-xa3e.onrender.com/api/v1"
+    baseURL: "http://localhost:3001/api/v1"
 });
 
 // interceptor para incluir o token automaticamente

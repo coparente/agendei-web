@@ -34,6 +34,12 @@ function Appointments() {
     theme: "colored",
   };
 
+  // Estados para paginação
+  const [currentPage, setCurrentPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
+  const [itemsPerPage] = useState(5); // Número de agendamentos por página
+  const [total, setTotal] = useState(1);
+
   // Verifica o token ao carregar o componente
   useEffect(() => {
     const token = localStorage.getItem("sessionToken");
@@ -57,10 +63,10 @@ function Appointments() {
     const modal = new bootstrap.Modal(document.getElementById("confirmDeleteModal"));
     modal.show();
   }
-  
+
   async function confirmDelete() {
     if (!idToDelete) return;
-  
+
     try {
       await api.delete(`/appointments/${idToDelete}`);
       toast.success("Agendamento deletado com sucesso!");
@@ -68,7 +74,7 @@ function Appointments() {
     } catch (error) {
       toast.error("Erro ao deletar o agendamento.");
     }
-  
+
     setIdToDelete(null);
   }
 
@@ -97,20 +103,23 @@ function Appointments() {
 
     }
   }
-  async function LoadAppointments() {
+  async function LoadAppointments(page = 1) {
 
     try {
       const response = await api.get("/admin/appointments", {
         params: {
           id_doctor: idDoctor,
           dt_start: dtStart,
-          dt_end: dtEnd
+          dt_end: dtEnd,
+          page: currentPage,
+          limit: itemsPerPage
         }
       });
-
+      console.log(response.data.pagination.total);
       if (response.data)
         setAppointments(response.data.appointments)
-
+      setTotalPages(response.data.pagination.pages);
+      setTotal(response.data.pagination.total);
 
     } catch (error) {
 
@@ -157,7 +166,47 @@ function Appointments() {
     checkAuth();
     LoadDoctors();
     LoadAppointments();
-  }, [navigate]);
+  }, [currentPage]);
+
+  const Pagination = () => {
+    const pages = [];
+
+    for (let i = 1; i <= totalPages; i++) {
+      pages.push(
+        <li key={i} className={`page-item ${currentPage === i ? 'active' : ''}`}>
+          <button className="page-link" onClick={() => setCurrentPage(i)}>
+            {i}
+          </button>
+        </li>
+      );
+    }
+
+    return (
+      <nav aria-label="Page navigation">
+        <ul className="pagination justify-content-center">
+          <li className={`page-item ${currentPage === 1 ? 'disabled' : ''}`}>
+            <button
+              className="page-link"
+              onClick={() => setCurrentPage(prev => prev - 1)}
+              disabled={currentPage === 1}
+            >
+              Anterior
+            </button>
+          </li>
+          {pages}
+          <li className={`page-item ${currentPage === totalPages ? 'disabled' : ''}`}>
+            <button
+              className="page-link"
+              onClick={() => setCurrentPage(prev => prev + 1)}
+              disabled={currentPage === totalPages}
+            >
+              Próxima
+            </button>
+          </li>
+        </ul>
+      </nav>
+    );
+  };
 
   return (
     <div className="container-fluid mt-page">
@@ -188,10 +237,20 @@ function Appointments() {
               })}
             </select>
           </div>
-          <button onClick={LoadAppointments} className="btn btn-primary" type="button">Filtrar</button>
+          <button
+            onClick={() => {
+              setCurrentPage(1);
+              LoadAppointments();
+            }}
+            className="btn btn-primary"
+            type="button"
+          >
+            Filtrar
+          </button>
         </div>
       </div>
       <hr />
+      <div className="text-start mb-2">Total Registros: {total}</div>
       <div>
         <table className="table table-hover">
           <thead>
@@ -227,6 +286,10 @@ function Appointments() {
             <p>Nenhum agendamento encontrado...</p>
           </div>
         }
+
+        {/* Paginação */}
+        {appointments.length > 0 && <Pagination />}
+
       </div>
       {/* Modal de Confirmação */}
       <div className="modal fade" id="confirmDeleteModal" tabIndex="-1" aria-hidden="true">
